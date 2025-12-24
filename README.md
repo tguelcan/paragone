@@ -137,12 +137,33 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 ### 6. Switch language
 
-`src/routes/+page.svelte`:
+First, create `src/lib/changeLanguage.ts`:
+
+```typescript
+import { command, getRequestEvent } from "$app/server";
+import { setLanguage } from "paragone";
+import z from "zod";
+
+/**
+ * Remote function to change the user's language preference
+ * @example await changeLanguage('de')
+ */
+export const changeLanguage = command(
+  z.string().min(2).max(10),
+  async (language) => {
+    const event = getRequestEvent();
+    setLanguage(event.cookies, language);
+    return { success: true, language };
+  }
+);
+```
+
+Then use it in `src/routes/+page.svelte`:
 
 ```svelte
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
-  import { changeLanguage } from 'paragone';
+  import { changeLanguage } from '$lib/changeLanguage';
   
   async function switchLanguage(lang: string) {
     await changeLanguage(lang);
@@ -153,6 +174,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 <button onclick={() => switchLanguage('en')}>English</button>
 <button onclick={() => switchLanguage('de')}>Deutsch</button>
 ```
+
+> **Note:** `changeLanguage` is not exported from `paragone` because it uses `$app/server` which only works in the context of your SvelteKit project. See [docs/REMOTE_FUNCTIONS.md](./docs/REMOTE_FUNCTIONS.md) for alternative implementations (Form Actions, API Routes, etc.).
 
 ## API Reference
 
@@ -226,14 +249,35 @@ setLanguage(cookies, 'de');
 
 #### `changeLanguage(language: string)`
 
-Change user's language preference (remote function using SvelteKit's `command()` or `form()`).
+Change user's language preference. You need to implement this in your own project because it uses SvelteKit's `command()` which cannot be exported from a library.
+
+**Create `src/lib/changeLanguage.ts`:**
 
 ```typescript
-import { changeLanguage } from 'paragone';
+import { command, getRequestEvent } from "$app/server";
+import { setLanguage } from "paragone";
+import z from "zod";
+
+export const changeLanguage = command(
+  z.string().min(2).max(10),
+  async (language) => {
+    const event = getRequestEvent();
+    setLanguage(event.cookies, language);
+    return { success: true, language };
+  }
+);
+```
+
+**Usage:**
+
+```typescript
+import { changeLanguage } from '$lib/changeLanguage';
 
 await changeLanguage('de');
-await invalidateAll(); // Reload page data if you use command()
+await invalidateAll(); // Reload page data
 ```
+
+See [docs/REMOTE_FUNCTIONS.md](./docs/REMOTE_FUNCTIONS.md) for alternative implementations (Form Actions, API Routes).
 
 ## Usage Patterns
 
@@ -284,7 +328,7 @@ const combined = {
 const { t } = new I18n(combined, locals.language);
 ```
 
-### Use in Remote Functions (Commands)
+### Use in Your Own Remote Functions (Commands)
 
 ```typescript
 import { command } from '$app/server';
@@ -303,6 +347,8 @@ export const saveData = command(z.object({ name: z.string() }), async (data, { l
   };
 });
 ```
+
+**Note:** Remote functions must be defined in your project, not imported from `paragone`.
 
 ## Configuration
 

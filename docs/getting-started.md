@@ -172,25 +172,52 @@ In your `+page.svelte`:
 <button>{t('button.learnMore')}</button>
 ```
 
-## Step 6: Add Language Switcher
+## Step 6: Create Local Language Switcher Function
+
+First, create `src/lib/changeLanguage.ts`:
+
+```typescript
+import { command, getRequestEvent } from "$app/server";
+import { setLanguage } from "paragone";
+import z from "zod";
+
+/**
+ * Remote function to change the user's language preference
+ * This must be defined in your project, not imported from paragone
+ * @example await changeLanguage('de')
+ */
+export const changeLanguage = command(
+  z.string().min(2).max(10),
+  async (language) => {
+    const event = getRequestEvent();
+    setLanguage(event.cookies, language);
+    return { success: true, language };
+  }
+);
+```
+
+> **Note:** The `changeLanguage` function cannot be exported from `paragone` because it uses `$app/server` which only works in your SvelteKit project context. You must create it locally.
+
+## Step 7: Add Language Switcher Component
 
 Create a language switcher component:
 
 ```svelte
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
-  import { changeLanguage } from 'paragone';
+  import { changeLanguage } from '$lib/changeLanguage';
   
   let { currentLanguage = 'en' } = $props();
   
   async function switchLanguage(lang: string) {
-    // Call remote function to change language
+    // Call local remote function to change language
     await changeLanguage(lang);
     
     // Reload all data with new language
     await invalidateAll();
   }
 </script>
+```
 
 <div class="language-switcher">
   <button

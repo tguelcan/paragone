@@ -8,7 +8,7 @@ This example demonstrates the basic usage of `paragone` in a simple SvelteKit ap
 - Creating translation files (`locale.json`)
 - Using translations in server load functions
 - Using translations in Svelte components with `$derived`
-- Switching languages with a language picker
+- Switching languages with a language picker (using local remote function)
 - Browser language detection
 
 ## File Structure
@@ -18,6 +18,8 @@ basic/
 ├── src/
 │   ├── hooks.server.ts          # Language detection
 │   ├── app.d.ts                 # Type definitions
+│   ├── lib/
+│   │   └── changeLanguage.ts    # Local remote function for language switching
 │   └── routes/
 │       ├── +layout.server.ts    # Layout with global translations
 │       ├── +layout.svelte       # Layout with language switcher
@@ -33,29 +35,10 @@ basic/
 ### 1. Install Dependencies
 
 ```bash
-npm install paragone
+npm install paragone zod
 ```
 
-### 2. Configure SvelteKit
-
-**Important:** Add experimental features to `svelte.config.js`:
-
-```javascript
-export default {
-  kit: {
-    experimental: {
-      remoteFunctions: true
-    }
-  },
-  compilerOptions: {
-    experimental: {
-      async: true
-    }
-  }
-};
-```
-
-### 3. Configure Types
+### 2. Configure Types
 
 **src/app.d.ts**
 ```typescript
@@ -70,7 +53,7 @@ declare global {
 export {};
 ```
 
-### 4. Set Up Language Detection
+### 3. Set Up Language Detection
 
 **src/hooks.server.ts**
 ```typescript
@@ -94,6 +77,31 @@ export const handle: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 ```
+
+### 4. Create Local Language Switcher Function
+
+**src/lib/changeLanguage.ts**
+```typescript
+import { command, getRequestEvent } from "$app/server";
+import { setLanguage } from "paragone";
+import z from "zod";
+
+/**
+ * Remote function to change the user's language preference
+ * This must be defined in your project, not imported from paragone
+ * @example await changeLanguage('de')
+ */
+export const changeLanguage = command(
+  z.string().min(2).max(10),
+  async (language) => {
+    const event = getRequestEvent();
+    setLanguage(event.cookies, language);
+    return { success: true, language };
+  }
+);
+```
+
+> **Note:** The `changeLanguage` function cannot be exported from `paragone` because it uses `$app/server` which only works in your SvelteKit project context. You must create it locally as shown above.
 
 ### 5. Create Translation File
 
@@ -228,7 +236,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 ```svelte
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
-  import { changeLanguage } from 'paragone';
+  import { changeLanguage } from '$lib/changeLanguage';
   
   let { data, children } = $props();
   
@@ -342,7 +350,7 @@ npm run dev
 
 4. **Language Switch**:
    - User clicks language button
-   - `changeLanguage()` sets cookie
+   - Local `changeLanguage()` function (from `$lib/changeLanguage.ts`) sets cookie
    - `invalidateAll()` reloads all data
    - Page re-renders with new language
 
@@ -374,13 +382,117 @@ t('features.title')
 t('features.item1')
 ```
 
+### 5. Local Remote Function
+The `changeLanguage` function must be defined in your project because it uses `$app/server`:
+
+```typescript
+// src/lib/changeLanguage.ts
+import { command, getRequestEvent } from "$app/server";
+import { setLanguage } from "paragone";
+
+export const changeLanguage = command(
+  z.string().min(2).max(10),
+  async (language) => {
+    const event = getRequestEvent();
+    setLanguage(event.cookies, language);
+    return { success: true, language };
+  }
+);
+```
+
+Then import from your local lib:
+```typescript
+import { changeLanguage } from '$lib/changeLanguage';
+```
+
+## Alternative Implementations
+
+If you don't want to use SvelteKit's `command()`, you can use:
+
+### Form Actions
+
+**src/routes/+layout.server.ts**
+```typescript
+import type { Actions } from './$types';
+import { setLanguage } from 'paragone';
+
+export const actions = {
+  changeLanguage: async ({ request, cookies }) => {
+    const data = await request.formData();
+    const language = data.get('language')?.toString();
+    
+    if (language) {
+      setLanguage(cookies, language);
+    }
+    
+    return { success: true };
+  }
+} satisfies Actions;
+```
+
+**src/routes/+layout.svelte**
+```svelte
+<script lang="ts">
+  import { enhance } from '$app/forms';
+</script>
+
+<form method="POST" action="?/changeLanguage" use:enhance>
+  <input type="hidden" name="language" value="en" />
+  <button type="submit">English</button>
+</form>
+
+<form method="POST" action="?/changeLanguage" use:enhance>
+  <input type="hidden" name="language" value="de" />
+  <button type="submit">Deutsch</button>
+</form>
+```
+
+### API Route
+
+**src/routes/api/language/+server.ts**
+```typescript
+import type { RequestHandler } from './$types';
+import { setLanguage } from 'paragone';
+import { json } from '@sveltejs/kit';
+
+export const POST: RequestHandler = async ({ request, cookies }) => {
+  const { language } = await request.json();
+  
+  if (language && typeof language === 'string') {
+    setLanguage(cookies, language);
+    return json({ success: true, language });
+  }
+  
+  return json({ success: false }, { status: 400 });
+};
+```
+
+**Usage:**
+```typescript
+async function switchLanguage(lang: string) {
+  const response = await fetch('/api/language', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ language: lang })
+  });
+  
+  if (response.ok) {
+    await invalidateAll();
+  }
+}
+```
+
 ## Next Steps
 
-- Check out the [Multi-Language Example](../multi-language) for more advanced usage
-- See the [Remote Functions Example](../remote-functions) for using translations in commands
-- Read the [API Reference](../../docs/api-reference.md) for complete documentation
+- Check out the [Complete Example](../complete-example) for more advanced usage
+- Read [docs/REMOTE_FUNCTIONS.md](../../docs/REMOTE_FUNCTIONS.md) for detailed remote function implementations
+- See the [API Reference](../../README.md#api-reference) for complete documentation
 
 ## Troubleshooting
+
+**Error: "changeLanguage is not a function"**
+- Make sure you created `src/lib/changeLanguage.ts` as shown in step 4
+- Import from `$lib/changeLanguage`, not from `paragone`
 
 **Translations not updating when switching language:**
 - Make sure you're using `$derived` in your component
@@ -388,9 +500,14 @@ t('features.item1')
 
 **Cookie not persisting:**
 - Check browser DevTools → Application → Cookies
-- Verify `httpOnly` is set to `false` (it is by default)
+- Verify `httpOnly` is set to `false` (it is by default in paragone)
 
 **Wrong language detected:**
 - Check your browser's language settings
 - Look at the `Accept-Language` header in Network tab
-- Verify `SUPPORTED_LANGUAGES` includes your language
+- Verify configured `supportedLanguages` includes your language
+
+**Error: "$app/server is not defined"**
+- Make sure `src/lib/changeLanguage.ts` is a `.ts` file, not `.svelte`
+- Verify the file is in the correct location
+- Check that you're using SvelteKit (not plain Svelte)

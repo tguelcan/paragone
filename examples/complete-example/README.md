@@ -55,6 +55,7 @@ complete-example/
 │   ├── lib/
 │   │   ├── i18n/
 │   │   │   └── locale.json              # Global translations
+│   │   ├── changeLanguage.ts            # Local remote function
 │   │   └── components/
 │   │       ├── LanguageSwitcher.svelte  # Language picker
 │   │       └── Nav.svelte               # Navigation
@@ -88,7 +89,7 @@ complete-example/
 ### 1. Install Dependencies
 
 ```bash
-npm install paragone
+npm install paragone zod
 ```
 
 ### 2. Configure Types
@@ -173,14 +174,40 @@ export {};
 }
 ```
 
-### 4. Language Switcher Component
+### 4. Create Local Language Switcher Function
+
+**src/lib/changeLanguage.ts**
+
+```typescript
+import { command, getRequestEvent } from "$app/server";
+import { setLanguage } from "paragone";
+import z from "zod";
+
+/**
+ * Remote function to change the user's language preference
+ * This must be defined in your project, not imported from paragone
+ * @example await changeLanguage('de')
+ */
+export const changeLanguage = command(
+  z.string().min(2).max(10),
+  async (language) => {
+    const event = getRequestEvent();
+    setLanguage(event.cookies, language);
+    return { success: true, language };
+  }
+);
+```
+
+> **Important:** The `changeLanguage` function cannot be exported from `paragone` because it uses `$app/server` which only works in your SvelteKit project context. You must create it locally as shown above.
+
+### 5. Language Switcher Component
 
 **src/lib/components/LanguageSwitcher.svelte**
 
 ```svelte
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
-  import { changeLanguage } from 'paragone';
+  import { changeLanguage } from '$lib/changeLanguage';
   import { I18n } from 'paragone';
   import * as globalLocale from '$lib/i18n/locale.json';
   
@@ -263,7 +290,7 @@ export {};
 </style>
 ```
 
-### 5. Navigation Component
+### 6. Navigation Component
 
 **src/lib/components/Nav.svelte**
 
@@ -333,7 +360,7 @@ export {};
 </style>
 ```
 
-### 6. Layout Files
+### 7. Layout Files
 
 **src/hooks.server.ts**
 
@@ -475,7 +502,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 </style>
 ```
 
-### 7. Home Page
+### 8. Home Page
 
 **src/routes/+page/locale.json**
 
@@ -704,7 +731,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 </style>
 ```
 
-### 8. Contact Page with Form Action and Remote Function
+### 9. Contact Page with Form Action and Remote Function
 
 **src/routes/contact/locale.json**
 
@@ -961,6 +988,20 @@ export const sendMessage = command(contactSchema, async (data, { locals }) => {
   }
 </style>
 ```
+
+## Why Create changeLanguage Locally?
+
+The `changeLanguage` function uses SvelteKit's `command()` and `$app/server`, which are only available in the context of a SvelteKit application, not in an npm library. Therefore, you must implement this function in your own project.
+
+**Benefits of this approach:**
+- Full control over implementation
+- Can add custom validation, logging, or database updates
+- Can adapt to your specific needs
+
+**Alternative implementations:**
+- See [docs/REMOTE_FUNCTIONS.md](../../docs/REMOTE_FUNCTIONS.md) for Form Actions and API Route examples
+- Use server actions if you prefer traditional SvelteKit patterns
+- Create custom API endpoints for REST-style language switching
 
 ## Running the Example
 

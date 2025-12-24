@@ -114,10 +114,34 @@ export const handle = async ({ event, resolve }) => {
 <h1>{t('title')}</h1>
 ```
 
-**3. Language Switcher**
+**3. Create Local Language Switcher Function**
+
+First, create `src/lib/changeLanguage.ts`:
+```typescript
+import { command, getRequestEvent } from "$app/server";
+import { setLanguage } from "paragone";
+import z from "zod";
+
+/**
+ * Remote function to change the user's language preference
+ * @example await changeLanguage('de')
+ */
+export const changeLanguage = command(
+  z.string().min(2).max(10),
+  async (language) => {
+    const event = getRequestEvent();
+    setLanguage(event.cookies, language);
+    return { success: true, language };
+  }
+);
+```
+
+> **Note:** The `changeLanguage` function cannot be exported from `paragone` because it uses `$app/server` which only works in your SvelteKit project context.
+
+**4. Language Switcher Component**
 ```svelte
 <script lang="ts">
-  import { changeLanguage } from 'paragone';
+  import { changeLanguage } from '$lib/changeLanguage';
   import { invalidateAll } from '$app/navigation';
   
   async function switchLanguage(lang: string) {

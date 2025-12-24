@@ -328,6 +328,29 @@ async function changeLanguage(language: string): Promise<{ success: boolean; lan
 
 This is a SvelteKit remote function (using `command()`) that sets the language cookie and can be called directly from the client.
 
+#### Implementation
+
+Create `src/lib/changeLanguage.ts` in your project:
+
+```typescript
+import { command, getRequestEvent } from "$app/server";
+import { setLanguage } from "paragone";
+import z from "zod";
+
+/**
+ * Remote function to change the user's language preference
+ * @example await changeLanguage('de')
+ */
+export const changeLanguage = command(
+  z.string().min(2).max(10),
+  async (language) => {
+    const event = getRequestEvent();
+    setLanguage(event.cookies, language);
+    return { success: true, language };
+  }
+);
+```
+
 #### Parameters
 
 | Parameter | Type | Required | Description |
@@ -342,7 +365,7 @@ This is a SvelteKit remote function (using `command()`) that sets the language c
 
 ```typescript
 import { invalidateAll } from '$app/navigation';
-import { changeLanguage } from 'paragone';
+import { changeLanguage } from '$lib/changeLanguage';
 
 async function switchToGerman() {
   const result = await changeLanguage('de');
@@ -359,7 +382,7 @@ async function switchToGerman() {
 ```svelte
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
-  import { changeLanguage } from 'paragone';
+  import { changeLanguage } from '$lib/changeLanguage';
   
   let { currentLanguage = 'en' } = $props();
   let isChanging = $state(false);
