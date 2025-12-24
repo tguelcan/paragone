@@ -1,6 +1,6 @@
 {
   "name": "paragone",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple, modern internationalization (i18n) library for SvelteKit with Svelte 5 Runes support",
   "author": "Tayfun Guelcan",
   "license": "MIT",

@@ -2,7 +2,7 @@
 
 > *From Greek "παράγλωσσος" (paraglossus) - multilingual, speaking many languages*
 
-Modern internationalization (i18n) library for SvelteKit with Svelte 5 Runes support.
+Modern internationalization (i18n) library for SvelteKit with Svelte 5 Runes and remotes support.
 
 [![npm version](https://img.shields.io/npm/v/paragone.svg)](https://www.npmjs.com/package/paragone)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

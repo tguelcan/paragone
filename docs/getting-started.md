@@ -24,7 +24,31 @@ pnpm add paragone
 bun add paragone
 ```
 
+## Important: SvelteKit Configuration
+
+⚠️ **paragone requires experimental features to be enabled in your `svelte.config.js`:**
+
+```javascript
+// svelte.config.js
+export default {
+  kit: {
+    experimental: {
+      remoteFunctions: true
+    }
+  },
+  compilerOptions: {
+    experimental: {
+      async: true
+    }
+  }
+};
+```
+
+Without these settings, the `changeLanguage()` remote function will not work correctly.
+
 ## Step 1: Configure TypeScript
+</text>
+
 
 Add the `language` property to your app locals by updating `src/app.d.ts`:
 
