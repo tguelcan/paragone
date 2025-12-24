@@ -1,5 +1,6 @@
-# paragone
+![PARAGONE](./static/logo.svg)
 
+# paragone
 > *From Greek "παράγλωσσος" (paraglossus) - multilingual, speaking many languages*
 
 Modern internationalization (i18n) library for SvelteKit with Svelte 5 Runes and remotes support.
@@ -96,7 +97,7 @@ Create `src/routes/+page/locale.json`:
 }
 ```
 
-### 4. Use in server load function
+### 4. Use in server load function (yes, you can use your locals also server-side)
 
 `src/routes/+page.server.ts`:
 
@@ -225,13 +226,13 @@ setLanguage(cookies, 'de');
 
 #### `changeLanguage(language: string)`
 
-Change user's language preference (remote function using SvelteKit's `command()`).
+Change user's language preference (remote function using SvelteKit's `command()` or `form()`).
 
 ```typescript
 import { changeLanguage } from 'paragone';
 
 await changeLanguage('de');
-await invalidateAll(); // Reload page data
+await invalidateAll(); // Reload page data if you use command()
 ```
 
 ## Usage Patterns
@@ -410,3 +411,6 @@ MIT © Tayfun Guelcan
 ---
 
 Made for the Svelte community
+
+And by the way
+For those who think, “Oh no, not another language library!”, the answer is: Shut up and use it!
