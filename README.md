@@ -135,9 +135,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 <button>{t('button.signup')}</button>
 ```
 
-### 6. Switch language
+### 6. Switch language (command())
+but you can also use it in a form remote function or action...:
 
-First, create `src/lib/changeLanguage.ts`:
+First, create `src/lib/remotes/common.remote.ts`:
 
 ```typescript
 import { command, getRequestEvent } from "$app/server";
@@ -163,8 +164,8 @@ Then use it in `src/routes/+page.svelte`:
 ```svelte
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
-  import { changeLanguage } from '$lib/changeLanguage';
-  
+  import { changeLanguage } from '$lib/remotes/common.remote';
+
   async function switchLanguage(lang: string) {
     await changeLanguage(lang);
     await invalidateAll();
