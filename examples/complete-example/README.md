@@ -2,6 +2,33 @@
 
 A comprehensive example showcasing all features of `paragone`.
 
+## Prerequisites
+
+Before starting, make sure you have:
+- SvelteKit project with Svelte 5
+- Node.js 18 or higher
+
+## Important: SvelteKit Configuration
+
+Add experimental features to `svelte.config.js`:
+
+```javascript
+export default {
+  kit: {
+    experimental: {
+      remoteFunctions: true
+    }
+  },
+  compilerOptions: {
+    experimental: {
+      async: true
+    }
+  }
+};
+```
+
+Without these settings, remote functions will not work.
+
 ## Features Demonstrated
 
 ✅ Global translations (navigation, common UI)  
@@ -58,7 +85,28 @@ complete-example/
 
 ## Step-by-Step Setup
 
-### 1. Global Translations
+### 1. Install Dependencies
+
+```bash
+npm install paragone
+```
+
+### 2. Configure Types
+
+**src/app.d.ts**
+```typescript
+declare global {
+  namespace App {
+    interface Locals {
+      language: string;
+    }
+  }
+}
+
+export {};
+```
+
+### 3. Global Translations
 
 **src/lib/i18n/locale.json**
 
@@ -125,7 +173,7 @@ complete-example/
 }
 ```
 
-### 2. Language Switcher Component
+### 4. Language Switcher Component
 
 **src/lib/components/LanguageSwitcher.svelte**
 
@@ -215,7 +263,7 @@ complete-example/
 </style>
 ```
 
-### 3. Navigation Component
+### 5. Navigation Component
 
 **src/lib/components/Nav.svelte**
 
@@ -285,7 +333,29 @@ complete-example/
 </style>
 ```
 
-### 4. Layout Files
+### 6. Layout Files
+
+**src/hooks.server.ts**
+
+First, configure paragone in your hooks:
+
+```typescript
+import type { Handle } from '@sveltejs/kit';
+import { configure, getLanguage } from 'paragone';
+
+configure({
+  defaultLanguage: 'en',
+  supportedLanguages: ['en', 'de']
+});
+
+export const handle: Handle = async ({ event, resolve }) => {
+  event.locals.language = getLanguage(
+    event.cookies,
+    event.request.headers.get('accept-language')
+  );
+  return resolve(event);
+};
+```
 
 **src/routes/+layout.server.ts**
 
@@ -405,7 +475,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 </style>
 ```
 
-### 5. Home Page
+### 7. Home Page
 
 **src/routes/+page/locale.json**
 
@@ -634,7 +704,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 </style>
 ```
 
-### 6. Contact Page with Form Action and Remote Function
+### 8. Contact Page with Form Action and Remote Function
 
 **src/routes/contact/locale.json**
 

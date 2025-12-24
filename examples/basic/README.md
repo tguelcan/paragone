@@ -36,7 +36,26 @@ basic/
 npm install paragone
 ```
 
-### 2. Configure Types
+### 2. Configure SvelteKit
+
+**Important:** Add experimental features to `svelte.config.js`:
+
+```javascript
+export default {
+  kit: {
+    experimental: {
+      remoteFunctions: true
+    }
+  },
+  compilerOptions: {
+    experimental: {
+      async: true
+    }
+  }
+};
+```
+
+### 3. Configure Types
 
 **src/app.d.ts**
 ```typescript
@@ -51,12 +70,18 @@ declare global {
 export {};
 ```
 
-### 3. Set Up Language Detection
+### 4. Set Up Language Detection
 
 **src/hooks.server.ts**
 ```typescript
 import type { Handle } from '@sveltejs/kit';
-import { getLanguage } from 'paragone';
+import { configure, getLanguage } from 'paragone';
+
+// Optional: Configure paragone
+configure({
+  defaultLanguage: 'en',
+  supportedLanguages: ['en', 'de']
+});
 
 export const handle: Handle = async ({ event, resolve }) => {
   const language = getLanguage(
@@ -70,7 +95,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 };
 ```
 
-### 4. Create Translation File
+### 5. Create Translation File
 
 **src/routes/+page/locale.json**
 ```json
@@ -104,7 +129,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 }
 ```
 
-### 5. Use in Server Load Function
+### 6. Use in Server Load Function
 
 **src/routes/+page.server.ts**
 ```typescript
@@ -122,7 +147,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 ```
 
-### 6. Use in Svelte Component
+### 7. Use in Svelte Component
 
 **src/routes/+page.svelte**
 ```svelte
@@ -197,7 +222,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 </style>
 ```
 
-### 7. Add Language Switcher
+### 8. Add Language Switcher
 
 **src/routes/+layout.svelte**
 ```svelte
