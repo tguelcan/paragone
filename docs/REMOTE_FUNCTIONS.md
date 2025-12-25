@@ -10,7 +10,7 @@ SvelteKit's `command()` and `$app/server` only work in the context of a SvelteKi
 
 ### Option 1: With SvelteKit Remote Commands (recommended)
 
-Create a file `src/lib/changeLanguage.ts`:
+Create a file `src/lib/remotes/common.remote.ts`:
 
 ```typescript
 import { command, getRequestEvent } from "$app/server";
@@ -36,7 +36,7 @@ export const changeLanguage = command(
 ```svelte
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
-  import { changeLanguage } from '$lib/changeLanguage';
+  import { changeLanguage } from '$lib/remotes/common.remote.ts';
   
   async function switchLanguage(lang: string) {
     await changeLanguage(lang);
