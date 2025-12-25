@@ -1,16 +1,16 @@
-# Remote Functions für Language Switching
+# Remote Functions for Language Switching
 
-## Warum ist `changeLanguage` nicht in der Library enthalten?
+## Why is `changeLanguage` not included in the library?
 
-SvelteKit's `command()` und `$app/server` funktionieren nur im Kontext eines SvelteKit-Projekts und können nicht aus einer npm-Library exportiert werden. Daher musst du die Remote-Funktion in deinem eigenen Projekt erstellen.
+SvelteKit's `command()` and `$app/server` only work in the context of a SvelteKit project and cannot be exported from an npm library. Therefore, you need to create the remote function in your own project.
 
-**Vorteil:** Du hast volle Kontrolle über die Implementierung und kannst sie an deine Bedürfnisse anpassen.
+**Advantage:** You have full control over the implementation and can adapt it to your needs.
 
-## Implementierung im eigenen Projekt
+## Implementation in Your Own Project
 
-### Option 1: Mit SvelteKit Remote Commands (empfohlen)
+### Option 1: With SvelteKit Remote Commands (recommended)
 
-Erstelle eine Datei `src/lib/changeLanguage.ts`:
+Create a file `src/lib/changeLanguage.ts`:
 
 ```typescript
 import { command, getRequestEvent } from "$app/server";
@@ -31,7 +31,7 @@ export const changeLanguage = command(
 );
 ```
 
-**Verwendung in Komponenten:**
+**Usage in Components:**
 
 ```svelte
 <script lang="ts">
@@ -40,7 +40,7 @@ export const changeLanguage = command(
   
   async function switchLanguage(lang: string) {
     await changeLanguage(lang);
-    await invalidateAll(); // Lädt die Seite mit neuer Sprache neu
+    await invalidateAll(); // Reloads the page with the new language
   }
 </script>
 
@@ -48,9 +48,9 @@ export const changeLanguage = command(
 <button onclick={() => switchLanguage('de')}>Deutsch</button>
 ```
 
-### Option 2: Mit Form Actions
+### Option 2: With Form Actions
 
-Erstelle in `src/routes/+page.server.ts`:
+Create in `src/routes/+page.server.ts`:
 
 ```typescript
 import type { Actions } from './$types';
@@ -70,7 +70,7 @@ export const actions = {
 } satisfies Actions;
 ```
 
-**Verwendung in Komponenten:**
+**Usage in Components:**
 
 ```svelte
 <script lang="ts">
@@ -88,9 +88,9 @@ export const actions = {
 </form>
 ```
 
-### Option 3: Mit API Route
+### Option 3: With API Route
 
-Erstelle `src/routes/api/language/+server.ts`:
+Create `src/routes/api/language/+server.ts`:
 
 ```typescript
 import type { RequestHandler } from './$types';
@@ -109,7 +109,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 };
 ```
 
-**Verwendung in Komponenten:**
+**Usage in Components:**
 
 ```svelte
 <script lang="ts">
@@ -132,9 +132,9 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 <button onclick={() => switchLanguage('de')}>Deutsch</button>
 ```
 
-## Erweiterte Beispiele
+## Advanced Examples
 
-### Mit Validierung und Fehlerbehandlung
+### With Validation and Error Handling
 
 ```typescript
 import { command, getRequestEvent } from "$app/server";
@@ -147,7 +147,7 @@ export const changeLanguage = command(
     const event = getRequestEvent();
     const config = getConfig();
     
-    // Prüfe, ob Sprache unterstützt wird
+    // Check if language is supported
     if (!config.supportedLanguages.includes(language)) {
       return { 
         success: false, 
@@ -166,7 +166,7 @@ export const changeLanguage = command(
 );
 ```
 
-### Mit Logging
+### With Logging
 
 ```typescript
 import { command, getRequestEvent } from "$app/server";
@@ -181,10 +181,10 @@ export const changeLanguage = command(
     
     setLanguage(event.cookies, language);
     
-    // Logge den Sprachwechsel
+    // Log the language change
     console.log(`User ${userId} changed language to ${language}`);
     
-    // Optional: Speichere in Datenbank
+    // Optional: Save to database
     // await db.updateUserLanguage(userId, language);
     
     return { success: true, language };
@@ -192,7 +192,7 @@ export const changeLanguage = command(
 );
 ```
 
-### Mit Redirect
+### With Redirect
 
 ```typescript
 import { command, getRequestEvent } from "$app/server";
@@ -218,45 +218,45 @@ export const changeLanguage = command(
 );
 ```
 
-## Häufige Fehler
+## Common Errors
 
-### ❌ Fehler: "changeLanguage is not a function"
+### ❌ Error: "changeLanguage is not a function"
 
-**Problem:** Du versuchst, `changeLanguage` aus `paragone` zu importieren.
+**Problem:** You're trying to import `changeLanguage` from `paragone`.
 
-**Lösung:** Erstelle die Funktion in deinem eigenen Projekt (siehe Optionen oben).
+**Solution:** Create the function in your own project (see options above).
 
-### ❌ Fehler: "$app/server is not defined"
+### ❌ Error: "$app/server is not defined"
 
-**Problem:** Du versuchst, `command()` im Client-Code zu verwenden.
+**Problem:** You're trying to use `command()` in client code.
 
-**Lösung:** Stelle sicher, dass die Datei `.ts` (nicht `.svelte`) ist und sich in einem geeigneten Verzeichnis befindet (z.B. `$lib/`).
+**Solution:** Make sure the file is `.ts` (not `.svelte`) and is located in an appropriate directory (e.g. `$lib/`).
 
-### ❌ Fehler: Sprache ändert sich nicht
+### ❌ Error: Language doesn't change
 
-**Problem:** Du vergisst, `invalidateAll()` aufzurufen.
+**Problem:** You forgot to call `invalidateAll()`.
 
-**Lösung:** Rufe nach dem Sprachwechsel immer `invalidateAll()` auf:
+**Solution:** Always call `invalidateAll()` after changing the language:
 
 ```typescript
 await changeLanguage('de');
-await invalidateAll(); // ← Wichtig!
+await invalidateAll(); // ← Important!
 ```
 
 ## Best Practices
 
-1. **Verwende Zod für Validierung** - Verhindert ungültige Sprachen
-2. **Rufe `invalidateAll()` auf** - Damit die Seite mit neuer Sprache neu lädt
-3. **Zeige Feedback** - Toast-Notification nach erfolgreichem Wechsel
-4. **Persistiere in DB** - Speichere Sprachpräferenz für angemeldete User
-5. **Fehlerbehandlung** - Zeige Fehlermeldung bei Problemen
+1. **Use Zod for validation** - Prevents invalid languages
+2. **Call `invalidateAll()`** - So the page reloads with the new language
+3. **Show feedback** - Toast notification after successful change
+4. **Persist in DB** - Save language preference for authenticated users
+5. **Error handling** - Show error message when problems occur
 
-## Zusammenfassung
+## Summary
 
-| Methode | Vorteile | Nachteile |
+| Method | Advantages | Disadvantages |
 |---------|----------|-----------|
-| **Command** | Modern, Type-safe, Progressive Enhancement | Benötigt Zod |
-| **Form Actions** | Funktioniert ohne JS, SvelteKit-Standard | Mehr Boilerplate |
-| **API Route** | Flexibel, REST-konform | Mehr Code, kein Progressive Enhancement |
+| **Command** | Modern, Type-safe, Progressive Enhancement | Requires Zod |
+| **Form Actions** | Works without JS, SvelteKit standard | More boilerplate |
+| **API Route** | Flexible, REST-compliant | More code, no Progressive Enhancement |
 
-**Empfehlung:** Verwende `command()` für moderne SvelteKit-Apps mit Svelte 5.
+**Recommendation:** Use `command()` for modern SvelteKit apps with Svelte 5.

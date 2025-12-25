@@ -210,6 +210,7 @@ Check if translation key exists.
 ```typescript
 if (i18n.has('optional.key')) {
   console.log(t('optional.key'));
+  console.log(t('optional.key'));
 }
 ```
 
@@ -252,7 +253,7 @@ setLanguage(cookies, 'de');
 
 Change user's language preference. You need to implement this in your own project because it uses SvelteKit's `command()` which cannot be exported from a library.
 
-**Create `src/lib/changeLanguage.ts`:**
+**Create `src/lib/remotes/common.remote.ts`:**
 
 ```typescript
 import { command, getRequestEvent } from "$app/server";
@@ -272,7 +273,7 @@ export const changeLanguage = command(
 **Usage:**
 
 ```typescript
-import { changeLanguage } from '$lib/changeLanguage';
+import { changeLanguage } from '$lib/remotes/common.remote.ts';
 
 await changeLanguage('de');
 await invalidateAll(); // Reload page data
